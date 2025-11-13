@@ -131,16 +131,31 @@ void OperatingSystemLoop(void) {
             PWMSetSpeedConsigne(30, MOTEUR_GAUCHE);
             stateRobot = STATE_AVANCE_EN_COURS;
             break;
+        
+        case STATE_RECULE:
+            PWMSetSpeedConsigne(-10, MOTEUR_DROIT);
+            PWMSetSpeedConsigne(-10, MOTEUR_GAUCHE);
+            stateRobot = STATE_RECULE_EN_COURS;
+            break;
+            
+            
 
         case STATE_AVANCE_EN_COURS:
+        case STATE_RECULE_EN_COURS:
         case STATE_TOURNE_GAUCHE_EN_COURS:
         case STATE_TOURNE_DROITE_EN_COURS:
         case STATE_TOURNE_SUR_PLACE_GAUCHE_EN_COURS:
         case STATE_TOURNE_SUR_PLACE_DROITE_EN_COURS:
         case STATE_TOURNE_GAUCHE_GAUCHE_EN_COURS:
         case STATE_TOURNE_DROITE_DROITE_EN_COURS:
+        case OBSTACLE_EN_FACE_GAUCHE:
+        case OBSTACLE_EN_FACE_DROITE:
+            
             SetNextRobotStateInAutomaticMode();
             break;
+            
+            
+            
 
         case STATE_TOURNE_GAUCHE:
             PWMSetSpeedConsigne(20, MOTEUR_DROIT);
@@ -167,14 +182,14 @@ void OperatingSystemLoop(void) {
             break;
 
         case STATE_TOURNE_GAUCHE_GAUCHE:
-            PWMSetSpeedConsigne(30, MOTEUR_DROIT);
-            PWMSetSpeedConsigne(20, MOTEUR_GAUCHE);
+            PWMSetSpeedConsigne(25, MOTEUR_DROIT);
+            PWMSetSpeedConsigne(10, MOTEUR_GAUCHE);
             stateRobot = STATE_TOURNE_GAUCHE_GAUCHE_EN_COURS;
             break;
 
         case STATE_TOURNE_DROITE_DROITE:
-            PWMSetSpeedConsigne(20, MOTEUR_DROIT);
-            PWMSetSpeedConsigne(30, MOTEUR_GAUCHE);
+            PWMSetSpeedConsigne(10, MOTEUR_DROIT);
+            PWMSetSpeedConsigne(25, MOTEUR_GAUCHE);
             stateRobot = STATE_TOURNE_DROITE_DROITE_EN_COURS;
             break;
 
@@ -194,20 +209,37 @@ void SetNextRobotStateInAutomaticMode() {
         robotState.distanceTelemetreGauche2 > 25)
         positionObstacle = OBSTACLE_A_DROITE;
 
-    else if (robotState.distanceTelemetreDroit > 30 &&
+    else if (robotState.distanceTelemetreDroit > 25 &&
              robotState.distanceTelemetreCentre > 20 &&
-             robotState.distanceTelemetreGauche < 25 &&
+             robotState.distanceTelemetreGauche < 30 &&
              robotState.distanceTelemetreDroit2 > 25)
         positionObstacle = OBSTACLE_A_GAUCHE;
+    
+    else if (robotState.distanceTelemetreDroit < 15 &&
+             robotState.distanceTelemetreCentre < 15 &&
+             robotState.distanceTelemetreGauche < 15 &&
+             robotState.distanceTelemetreDroit2 < 15 &&
+             robotState.distanceTelemetreGauche2 < 15)
+        positionObstacle = OBSTACLE_AUTOUR;
 
-    else if (robotState.distanceTelemetreCentre < 35)
+    else if (robotState.distanceTelemetreCentre < 35 &&
+            (robotState.distanceTelemetreGauche < 35 || 
+             robotState.distanceTelemetreGauche2 < 35) )
+        positionObstacle = OBSTACLE_EN_FACE_GAUCHE;
+    
+    else if (robotState.distanceTelemetreCentre < 35 &&
+            (robotState.distanceTelemetreDroit < 35 || 
+             robotState.distanceTelemetreDroit2 < 35) )
+        positionObstacle = OBSTACLE_EN_FACE_DROITE;
+    
+    else if (robotState.distanceTelemetreCentre < 35 )
         positionObstacle = OBSTACLE_EN_FACE;
 
-    else if (robotState.distanceTelemetreDroit2 < 25 &&
+    else if (robotState.distanceTelemetreDroit2 < 35 &&
              robotState.distanceTelemetreDroit > 25 &&
              robotState.distanceTelemetreCentre > 20 &&
              robotState.distanceTelemetreGauche > 25 &&
-             robotState.distanceTelemetreGauche2 > 35)
+             robotState.distanceTelemetreGauche2 > 25)
         positionObstacle = OBSTACLE_A_DROITE_DROITE;
 
     else if (robotState.distanceTelemetreDroit2 > 25 &&
@@ -215,6 +247,20 @@ void SetNextRobotStateInAutomaticMode() {
              robotState.distanceTelemetreCentre > 20 &&
              robotState.distanceTelemetreGauche > 25 &&
              robotState.distanceTelemetreGauche2 < 35)
+        positionObstacle = OBSTACLE_A_GAUCHE_GAUCHE;
+    
+    else if (robotState.distanceTelemetreDroit2 < 10 &&
+             robotState.distanceTelemetreDroit > 20 &&
+             robotState.distanceTelemetreCentre > 20 &&
+             robotState.distanceTelemetreGauche > 20 &&
+             robotState.distanceTelemetreGauche2 > 20)
+        positionObstacle = OBSTACLE_A_DROITE_DROITE;
+    
+    else if (robotState.distanceTelemetreDroit2 > 20 &&
+             robotState.distanceTelemetreDroit > 20 &&
+             robotState.distanceTelemetreCentre > 20 &&
+             robotState.distanceTelemetreGauche > 20 &&
+             robotState.distanceTelemetreGauche2 < 10)
         positionObstacle = OBSTACLE_A_GAUCHE_GAUCHE;
 
     else if (robotState.distanceTelemetreDroit2 < 20 &&
@@ -237,6 +283,9 @@ void SetNextRobotStateInAutomaticMode() {
         case OBSTACLE_EN_FACE: nextStateRobot = STATE_TOURNE_SUR_PLACE_GAUCHE; break;
         case OBSTACLE_A_DROITE_DROITE: nextStateRobot = STATE_TOURNE_GAUCHE_GAUCHE; break;
         case OBSTACLE_A_GAUCHE_GAUCHE: nextStateRobot = STATE_TOURNE_DROITE_DROITE; break;
+        case OBSTACLE_EN_FACE_GAUCHE: nextStateRobot = STATE_TOURNE_SUR_PLACE_DROITE; break;
+        case OBSTACLE_EN_FACE_DROITE: nextStateRobot = STATE_TOURNE_SUR_PLACE_GAUCHE; break;
+        case OBSTACLE_AUTOUR: nextStateRobot = STATE_RECULE; break;
     }
 
     stateRobot = nextStateRobot;
